@@ -1,0 +1,5 @@
+[oldserver]
+oldbitrix ansible_host=95.213.180.210 ansible_port=22
+
+[newserver]
+newbitrix ansible_host=3.120.32.52 ansible_port=22

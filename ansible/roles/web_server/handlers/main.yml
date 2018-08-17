@@ -1,0 +1,11 @@
+- name: "stop_apache2"
+  become: yes
+  systemd:
+    name: "apache2"
+    state: stopped
+
+- name: "stop_nginx"
+  become: yes
+  systemd:
+    name: "nginx"
+    state: stopped

@@ -1,0 +1,67 @@
+---
+
+
+- name: Obtaining needed public keys
+  become: yes
+  apt_key: 
+    url: "{{ item }}"
+    state: present
+  with_items:
+    - "http://www.percona.com/downloads/RPM-GPG-KEY-percona"
+  tags: prepare
+
+
+- name: Ensure all needed repositories are installed
+  become: yes
+  apt_repository: 
+    repo: "{{ item }}"
+    state: present
+  with_items:
+    - "ppa:ondrej/php"
+    - "deb http://repo.percona.com/apt bionic main"
+    - "deb-src http://repo.percona.com/apt bionic main"
+  tags: prepare
+
+- name: Install all packages, except nginx
+  become: yes
+  apt: 
+    pkg: "{{ item }}"
+    update_cache: yes
+    state: latest
+  with_items: "{{ packages }}"
+  notify: "stop_apache2"
+  tags: prepare
+
+- name: Stop apache2 to install nginx
+  become: yes
+  systemd:
+    name: apache2
+    state: stopped
+  tags: prepare
+
+- name: Install nginx
+  become: yes
+  apt:
+    pkg: nginx
+    state: latest
+  notify: "stop_nginx"
+  tags: prepare
+
+- name: Stop nginx
+  become: yes
+  systemd:
+    name: nginx
+    state: stopped
+  tags: prepare
+
+- name: Create directory to sync
+  become: yes
+  file: 
+    path: "{{ item }}"
+    owner: ubuntu
+
+- name: Sync configuration folders # Quick, but not correct way --> should be done via templates 
+  include: copy.yml
+  tags: sync
+    
+

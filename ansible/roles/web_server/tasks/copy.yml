@@ -1,0 +1,11 @@
+---
+  - name: copy site_data to new_server
+    delegate_to: newbitrix
+    synchronize: 
+      src: "{{ item.1 }}/"
+      dst: "{{ item.2 }}/"
+      recursive: yes
+    with_subelements:
+      - "{{ paths }}"
+      - old
+      - new

@@ -1,0 +1,7 @@
+---
+- hosts: oldbitrix
+  tasks:
+    - import_role:
+        name: web_server
+      tags:
+        - sync
