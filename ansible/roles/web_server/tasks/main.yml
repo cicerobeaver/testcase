@@ -1,6 +1,5 @@
 ---
 
-
 - name: Obtaining needed public keys
   become: yes
   apt_key: 
@@ -8,7 +7,9 @@
     state: present
   with_items:
     - "http://www.percona.com/downloads/RPM-GPG-KEY-percona"
-  tags: prepare
+  tags:
+    - prepare
+    - allrun
 
 
 - name: Ensure all needed repositories are installed
@@ -20,7 +21,9 @@
     - "ppa:ondrej/php"
     - "deb http://repo.percona.com/apt bionic main"
     - "deb-src http://repo.percona.com/apt bionic main"
-  tags: prepare
+  tags: 
+    - prepare
+    - allrun
 
 - name: Install all packages, except nginx
   become: yes
@@ -30,14 +33,18 @@
     state: latest
   with_items: "{{ packages }}"
   notify: "stop_apache2"
-  tags: prepare
+  tags:
+    - prepare
+    - allrun
 
 - name: Stop apache2 to install nginx
   become: yes
   systemd:
     name: apache2
     state: stopped
-  tags: prepare
+  tags:
+    - prepare
+    - allrun
 
 - name: Install nginx
   become: yes
@@ -45,23 +52,105 @@
     pkg: nginx
     state: latest
   notify: "stop_nginx"
-  tags: prepare
+  tags:
+    - prepare
+    - allrun
 
 - name: Stop nginx
   become: yes
   systemd:
     name: nginx
     state: stopped
-  tags: prepare
+  tags:
+    - prepare
+    - allrun
 
-- name: Create directory to sync
+- name: Prepare new bitrix user
+  become: yes
+  user: 
+    name: "{{ item.name }}"
+    groups: "{{ item.groups }}"
+    append: "{{ item.append }}"
+  with_items: "{{ users }}"
+  tags:
+    - prepare
+    - allrun
+
+- name: Change permissions for config files and copyed files
   become: yes
   file: 
-    path: "{{ item }}"
-    owner: ubuntu
+    path: "{{ item.path }}"
+    owner: "{{ item.user }}"
+    group: "{{ item.group }}"
+    mode: "{{ item.perm }}"
+  with_items: "{{ permissions }}"
+  tags:
+    - aftersync
+    - allrun
 
-- name: Sync configuration folders # Quick, but not correct way --> should be done via templates 
-  include: copy.yml
-  tags: sync
-    
+- name: Add additional symlinks (1/2)
+  become: yes
+  file: 
+    src: "{{ item.src }}"
+    dest: "{{ item.dest }}"
+    state: link
+  with_items:
+    - { src: "/etc/nginx/bx/site_avaliable/bx_ext_seletest.ru.conf", dest: "/etc/nginx/bx/site_enabled/bx_ext_seletest.ru.conf" }
+    - { src: "/etc/nginx/bx/site_avaliable/bx_ext_ssl_seletest.ru.conf", dest: "/etc/nginx/bx/site_enabled/bx_ext_ssl_seletest.ru.conf" }
+    - { src: "/etc/nginx/bx/conf/push-im_subscrider.conf", dest: "/etc/nginx/bx/conf/im_subscrider.conf"}
+    - { src: "/etc/nginx/bx/conf/general-add_header.conf", dest: "/etc/nginx/bx/conf/http-add_header.conf"}
+    - { src: "/etc/nginx/bx/conf/blank.conf", dest: "/etc/nginx/bx/server_monitor.conf"}
+  tags:
+    - aftersync
+    - allrun
 
+- name: Add additional symlinks (2/2)
+  become: yes
+  file: 
+    src: "{{ item.src }}"
+    dest: "{{ item.dest }}"
+    state: link
+    group: bitrix
+  with_items:
+    - { src: "/run/apache2", dest: "/etc/apache2/run" }
+
+- name: Prepare database user
+  become: yes
+  mysql_user:
+    name: "{{ dbuser }}"
+    host: localhost
+    password: "{{ dbpass }}"
+    priv: "{{ priv }}"
+  tags:
+    - prepare
+    - allrun
+
+- name: Import database
+  become: yes
+  mysql_db:
+    name: "{{ database }}"
+    login_user: "{{ dbuser }}"
+    login_password: "{{ dbpass }}"
+    state: import
+    target: "{{ newpath }}/{{ name }}"
+
+- name: Start apache2
+  become: yes
+  systemd:
+    name: apache2
+    state: started
+  tags:
+    - prepare
+    - allrun
+
+- name: Start nginx
+  become: yes
+  systemd:
+    name: nginx
+    state: started
+  tags:
+    - prepare
+    - allrun
+
+
+  

@@ -1,3 +1,9 @@
 ---
-ansible_user: <user_here>
-ansible_password: <password_here>
+ansible_user: 
+ansible_password: 
+database: 
+dbuser: 
+dbpass: 
+oldpath: 
+newpath: 
+name: 

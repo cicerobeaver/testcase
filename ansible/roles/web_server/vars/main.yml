@@ -1,4 +1,6 @@
 packages:
+  - nginx-extras
+  - libmysqlclient-dev
   - apache2
   - libapache2-mod-php7.1
   - php7.1 
@@ -18,13 +20,16 @@ packages:
   - percona-server-common-5.7
   - percona-server-client-5.7
 
+users: 
+  - { name: "bitrix", groups: "", append: "no"}
 
-paths:
-  old:
-    - "/etc/httpd"
-    - "/etc/nginx"
-    - "/home/bitrix/ext_www"
-  new: 
-    - "/etc/apache2"
-    - "/etc/nginx"
-    - "/home/bitrix/ext_www"
+permissions:
+  - { path: "/etc/apache2/bx/", perm: "0644", user: "bitrix", group: "bitrix" }
+  - { path: "/etc/apache2/apache2.conf", perm: "0644", user: "bitrix", group: "bitrix" }
+  - { path: "/etc/nginx/nginx.conf", perm: "0644", user: "bitrix", group: "bitrix" }
+  - { path: "/etc/nginx/bx/site_avaliable", perm: "0644", user: "bitrix", group: "bitrix" }
+  - { path: "/etc/nginx/bx/conf", perm: "0644", user: "bitrix", group: "bitrix" }
+  - { path: "/etc/nginx/bx/maps", perm: "0644", user: "bitrix", group: "bitrix" }
+  - { path: "/etc/nginx/openssl.cnf", perm: "0644", user: "bitrix", group: "bitrix" }
+
+

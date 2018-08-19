@@ -1,0 +1,17 @@
+---
+- hosts:  oldbitrix
+  tasks:
+    - name: make a dump of database
+      shell: mysqldump --user="{{ dbuser }}" --password="{{ dbpass }}" "{{ database }}" > "{{ oldpath }}/{{ name }}"
+
+    - name: copy dump to new server
+      delegate_to: newbitrix
+      remote_user: bitrix
+      become: yes
+      copy: 
+        remote_src: yes
+        src: "{{ oldpath }}/{{ name }}"
+        dest: "{{ newpath }}/{{ name }}"
+
+
+        

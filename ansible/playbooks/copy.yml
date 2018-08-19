@@ -1,7 +1,20 @@
 ---
-- hosts: oldbitrix
+- hosts: newbitrix
   tasks:
-    - import_role:
-        name: web_server
-      tags:
-        - sync
+    - name: copy site_data to new_server
+      remote_user: ubuntu
+      become: yes
+      delegate_to: oldbitrix
+      synchronize: 
+        src: "{{ item.oldpath }}/"
+        dest: "{{ item.newpath }}/"
+        recursive: yes
+        mode: push
+        times: no
+        rsync_opts:
+          - "--safe-links"
+          - "--verbose"
+      with_items: 
+        - { oldpath: "/etc/httpd2/", newpath: "/etc/apache2/" }
+        - { oldpath: "/etc/nginx2/nginx/", newpath: "/etc/nginx/"}
+        - { oldpath: "/home/bitrix/ext_www2/", newpath: "/home/bitrix/ext_www/"}
